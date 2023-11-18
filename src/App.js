@@ -3,18 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 function App() {
   const bearer = "Bearer ";
-  // const token = `<div class='alert alert-success'>Registration successful, going to login page!</div>
-  // <script language='javascript'>
-  //   Cookies.set("token","eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhcnB3YWxsZXQiLCJhdWQiOiJ0ZXN0MjQiLCJpYXQiOjE2OTkyNzUzMjMsIm5iZiI6MTY5OTI3NTMyMywiZXhwIjoxNzAxODY3MzIzLCJkYXRhIjp7InVzZXJpZCI6NDkxMTI2MCwiZW1haWwiOiJodXkwMjRAZ21haWwuY29tIiwiaXAiOiI1NC44Ni41MC4xMzkifX0.toIilPtvGVxRYeZeQ5OJCwhj5pw_Vl-ey40573qD-gY");
-  //       Cookies.set("code","1S8b");
-  //       window.setTimeout( function() {
-  //       window.location = 'activate.html';
-  //       }, 3000);
-  // </script>`;
-  // console.log(bearer.concat(token.toString().split(`"`)[3]));
-
   const [score, setScore] = useState(0);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFileBinance, setSelectedFileBinance] = useState(null);
+  const [selectedFileCoinsavi, setSelectedFileCoinsavi] = useState(null);
   const listData = useRef([["TK", "MK", "TOKEN"]]).current;
 
   const token1 =
@@ -58,13 +49,32 @@ function App() {
   const token20 =
     "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJhcnB3YWxsZXQiLCJhdWQiOiJ0ZXN0NDQiLCJpYXQiOjE2OTk0NTg5OTUsIm5iZiI6MTY5OTQ1ODk5NSwiZXhwIjoxNzAyMDUwOTk1LCJkYXRhIjp7InVzZXJpZCI6NDkxMTgwNywiZW1haWwiOiJodXk0NEBnbWFpbC5jb20iLCJpcCI6IjU0Ljg2LjUwLjEzOSJ9fQ._p53TBNhzvoloAz_CsBHZN5lbG-fREZacQlmyVGFVgs";
 
-  const fetchData = async (token) => {
+  const withdrawBinance = async (token) => {
     const reponse = await axios.post(
       "https://api.arpwallet.com/api/user/withdraw_xrp",
       {
         address: "rNxp4h8apvRis6mJf9Sh8C6iRxfrDWN7AV",
         amount: "0.000027",
         memotag: "330225049",
+        vericode: "025l7IO47861A3369Q552468D98",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+      }
+    );
+    console.log(reponse.data);
+    setScore((prev) => prev + 0.000027);
+  };
+  const withdrawCoinsavi = async (token) => {
+    const reponse = await axios.post(
+      "https://api.arpwallet.com/api/user/withdraw_xrp",
+      {
+        address: "rUzWJkXyEtT8ekSSxkBYPqCvHpngcy6Fks",
+        amount: "0.000027",
+        memotag: "6131652",
         vericode: "025l7IO47861A3369Q552468D98",
       },
       {
@@ -124,17 +134,25 @@ function App() {
   //   }, 70000);
   // }, []);
 
-  const handleWithdraw = (jsonData) => {
+  const handleWithdrawBinance = (jsonData) => {
     setInterval(() => {
       for (let index = 0; index < jsonData.length; index++) {
         const element = jsonData[index];
-        fetchData(element.TOKEN);
+        withdrawBinance(element.TOKEN);
+      }
+    }, 70000);
+  };
+  const handleWithdrawCoinsavi = (jsonData) => {
+    setInterval(() => {
+      for (let index = 0; index < jsonData.length; index++) {
+        const element = jsonData[index];
+        withdrawCoinsavi(element.TOKEN);
       }
     }, 70000);
   };
 
   const handleRegister = () => {
-    for (let index = 50; index <= 150; index++) {
+    for (let index = 151; index <= 250; index++) {
       register(index);
     }
   };
@@ -143,13 +161,17 @@ function App() {
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.aoa_to_sheet(listData);
     XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-    XLSX.writeFile(workbook, "data.xlsx");
+    XLSX.writeFile(workbook, "data1.xlsx");
   };
-  const handleFileChange = (event) => {
+  const handleFileChangeBinance = (event) => {
     const file = event.target.files[0];
-    setSelectedFile(file);
+    setSelectedFileBinance(file);
   };
-  const handleFileUpload = () => {
+  const handleFileChangeCoinsavi = (event) => {
+    const file = event.target.files[0];
+    setSelectedFileCoinsavi(file);
+  };
+  const handleFileUpload = (type) => {
     // Xử lý file đã chọn ở đây...
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -163,9 +185,16 @@ function App() {
       // Chuyển sheet thành dạng JSON
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
       // Xử lý dữ liệu JSON ở đây...
-      handleWithdraw(jsonData);
+      if (type === "binance") {
+        handleWithdrawBinance(jsonData);
+      }
+      if (type === "coinsavi") {
+        handleWithdrawCoinsavi(jsonData);
+      }
     };
-    reader.readAsBinaryString(selectedFile);
+    reader.readAsBinaryString(
+      type === "binance" ? selectedFileBinance : selectedFileCoinsavi
+    );
   };
   return (
     <div>
@@ -175,8 +204,15 @@ function App() {
       <button type="button" onClick={exportFile}>
         Export file
       </button>
-      <input type="file" onChange={handleFileChange} />
-      <button onClick={handleFileUpload}>Upload</button>
+      <input type="file" onChange={handleFileChangeBinance} />
+      <button onClick={() => handleFileUpload("binance")}>
+        Upload Binance
+      </button>
+
+      <input type="file" onChange={handleFileChangeCoinsavi} />
+      <button onClick={() => handleFileUpload("coinsavi")}>
+        Upload CoinSavi
+      </button>
     </div>
   );
 }
