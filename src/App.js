@@ -14,6 +14,7 @@ function App() {
   // console.log(bearer.concat(token.toString().split(`"`)[3]));
 
   const [score, setScore] = useState(0);
+  const [selectedFile, setSelectedFile] = useState(null);
   const listData = useRef([["TK", "MK", "TOKEN"]]).current;
 
   const token1 =
@@ -123,17 +124,61 @@ function App() {
   //   }, 70000);
   // }, []);
 
-  useEffect(() => {
-    // for (let index = 50; index <= 100; index++) {}
-    register(48);
-  }, []);
+  const handleWithdraw = (jsonData) => {
+    setInterval(() => {
+      for (let index = 0; index < jsonData.length; index++) {
+        const element = jsonData[index];
+        fetchData(element.TOKEN);
+      }
+    }, 70000);
+  };
 
-  const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.aoa_to_sheet(listData);
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-  XLSX.writeFile(workbook, "data.xlsx");
+  const handleRegister = () => {
+    for (let index = 50; index <= 150; index++) {
+      register(index);
+    }
+  };
 
-  return <div>{score}</div>;
+  const exportFile = () => {
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet(listData);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    XLSX.writeFile(workbook, "data.xlsx");
+  };
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    setSelectedFile(file);
+  };
+  const handleFileUpload = () => {
+    // Xử lý file đã chọn ở đây...
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const data = e.target.result;
+      const workbook = XLSX.read(data, { type: "binary" });
+
+      // Lấy dữ liệu từ sheet đầu tiên (Sheet1)
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+
+      // Chuyển sheet thành dạng JSON
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      // Xử lý dữ liệu JSON ở đây...
+      handleWithdraw(jsonData);
+    };
+    reader.readAsBinaryString(selectedFile);
+  };
+  return (
+    <div>
+      <button type="button" onClick={handleRegister}>
+        Register
+      </button>
+      <button type="button" onClick={exportFile}>
+        Export file
+      </button>
+      <input type="file" onChange={handleFileChange} />
+      <button onClick={handleFileUpload}>Upload</button>
+    </div>
+  );
 }
 
 export default App;
