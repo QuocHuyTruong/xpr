@@ -6,6 +6,8 @@ function App() {
   const [score, setScore] = useState(0);
   const [selectedFileBinance, setSelectedFileBinance] = useState(null);
   const [selectedFileCoinsavi, setSelectedFileCoinsavi] = useState(null);
+  const [selectedFileCCwalet, setSelectedFileCCwalet] = useState(null);
+
   const listData = useRef([["TK", "MK", "TOKEN"]]).current;
 
   const token1 =
@@ -66,7 +68,6 @@ function App() {
       }
     );
     console.log(reponse.data);
-    setScore((prev) => prev + 0.000027);
   };
   const withdrawCoinsavi = async (token) => {
     const reponse = await axios.post(
@@ -85,7 +86,24 @@ function App() {
       }
     );
     console.log(reponse.data);
-    setScore((prev) => prev + 0.000027);
+  };
+  const withdrawCCwalet = async (token) => {
+    const reponse = await axios.post(
+      "https://api.arpwallet.com/api/user/withdraw_xrp",
+      {
+        address: "rwyQp3eC5j6AumcptZhfmiXAykpeswZKeJ",
+        amount: "0.000027",
+        memotag: "657683",
+        vericode: "025l7IO47861A3369Q552468D98",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+      }
+    );
+    console.log(reponse.data);
   };
 
   const register = async (index) => {
@@ -150,9 +168,17 @@ function App() {
       }
     }, 70000);
   };
+  const handleWithdrawCCwalet = (jsonData) => {
+    setInterval(() => {
+      for (let index = 0; index < jsonData.length; index++) {
+        const element = jsonData[index];
+        withdrawCCwalet(element.TOKEN);
+      }
+    }, 70000);
+  };
 
   const handleRegister = () => {
-    for (let index = 151; index <= 250; index++) {
+    for (let index = 10001; index <= 11000; index++) {
       register(index);
     }
   };
@@ -171,7 +197,23 @@ function App() {
     const file = event.target.files[0];
     setSelectedFileCoinsavi(file);
   };
+  const handleFileChangeCCwalet = (event) => {
+    const file = event.target.files[0];
+    setSelectedFileCCwalet(file);
+  };
   const handleFileUpload = (type) => {
+    const abc = () => {
+      switch (type) {
+        case "binance":
+          return selectedFileBinance;
+        case "coinsavi":
+          return selectedFileCoinsavi;
+        case "ccwalet":
+          return selectedFileCCwalet;
+        default:
+          return selectedFileCCwalet;
+      }
+    };
     // Xử lý file đã chọn ở đây...
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -191,10 +233,11 @@ function App() {
       if (type === "coinsavi") {
         handleWithdrawCoinsavi(jsonData);
       }
+      if (type === "ccwalet") {
+        handleWithdrawCCwalet(jsonData);
+      }
     };
-    reader.readAsBinaryString(
-      type === "binance" ? selectedFileBinance : selectedFileCoinsavi
-    );
+    reader.readAsBinaryString(abc());
   };
   return (
     <div>
@@ -212,6 +255,11 @@ function App() {
       <input type="file" onChange={handleFileChangeCoinsavi} />
       <button onClick={() => handleFileUpload("coinsavi")}>
         Upload CoinSavi
+      </button>
+
+      <input type="file" onChange={handleFileChangeCCwalet} />
+      <button onClick={() => handleFileUpload("ccwalet")}>
+        Upload CCwalet
       </button>
     </div>
   );
